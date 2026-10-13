@@ -50,7 +50,30 @@ app.get("/", async (req, res) => {
     `))
   }
 
+  // Nova chamada para obter as estatísticas
+  let totalMensagens = "Indisponível"
+
+  try {
+    statsResponse = await fetch(
+      `${backendUrl}/api/estatisticas`
+    )
+
+    if (!statsResponse.ok) {
+      throw new Error(`HTTP ${statsResponse.status}`)
+    }
+
+    const stats = await statsResponse.json()
+    totalMensagens = stats.total_mensagens
+
+  } catch (err) {
+    console.error(
+      "Não foi possível obter as estatísticas:",
+      err.message
+    )
+  }
+
   const lista = data.mensagens
+
     .map((m) => `<li><b>${escapar(m.autor)}</b>: ${escapar(m.texto)} <small>(${m.criada_em})</small></li>`)
     .join("")
 
@@ -63,6 +86,8 @@ app.get("/", async (req, res) => {
       <button>Publicar</button>
     </form>
     <ul>${lista || "<li>Ainda não há mensagens.</li>"}</ul>
+    <p>  📊 Total de mensagens: ${escapar(totalMensagens)}</p>
+
     <p>Respondido pelo backend número <b>${escapar(data.backend_number)}</b>
        (hostname <code>${escapar(data.backend_hostname)}</code>)</p>
   `))
@@ -82,6 +107,8 @@ app.post("/mensagens", async (req, res) => {
   }
   res.redirect("/")
 })
+
+
 
 app.get("/healthcheck", (req, res) => {
   res.status(200).send("O frontend funciona!")
